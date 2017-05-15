@@ -4,8 +4,7 @@
 ####脚本变量定义#################################################
 #################################################################
 # 要备份的数据库名，多个数据库用空格分开
-#databases=(creativecloud,pro_creativecloud,ceshi,test0504,test0505bak,test0510)
-databases=(creativecloud)
+databases=(creativecloud pro_creativecloud ceshi test0504 test0505bak test0510)
 # 数据库登录名
 USER="root"
 # 数据库密码
