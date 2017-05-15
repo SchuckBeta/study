@@ -1,0 +1,119 @@
+----------------------------------------------------------------------------------------------
+Sonar结合maven项目使用
+----------------------------------------------------------------------------------------------
+前言：
+	1、使用须知：
+		a、需要先安装好Maven和Sonar!
+		b、掌握命令：(mvn sonar:sonar)和（sonar-runner -v）
+	2、Sonar项目配置文件：
+		a、sonar-project.properties
+	3、异常处理：
+	4、checkStyle插件
+	5、findBugs插件
+	6、coverage插件
+
+正文：
+	1、使用须知：
+		a、安装环境
+			1)、安装Maven请查看（Maven安装和私服常用配置.txt）
+			2)、安装Sonar请查看（Sonar持续集成安装配置.docx）
+		b、掌握命令：
+			mvn sonar:sonar
+				集成Maven会自动把所需数据（如单元测试结果、静态检测结果等）上传到 Sonar 服务器
+				Maven 配置settings.xml 文件:
+					<profile>
+					   <id>sonar</id>
+					   <activation>
+					       <activeByDefault>true</activeByDefault>
+					   </activation>
+					   <properties>
+					        <sonar.jdbc.url>jdbc:mysql://192.168.0.105:3306/sonar?useUnicode=true&characterEncoding=utf8</sonar.jdbc.url>
+					        <sonar.jdbc.driver>com.mysql.jdbc.Driver</sonar.jdbc.driver>
+					        <sonar.jdbc.username>root</sonar.jdbc.username>
+					        <sonar.jdbc.password>sonar123456</sonar.jdbc.password>
+					       <sonar.host.url>http://localhost:9000</sonar.host.url>
+					   </properties>
+					</profile>
+				Maven插件：
+					http://www.mojohaus.org/sonar-maven-plugin/plugin-info.html
+
+					<build>
+					    <!-- To define the plugin version in your parent POM -->
+					    <pluginManagement>
+					      <plugins>
+					        <plugin>
+					          <groupId>org.codehaus.mojo</groupId>
+					          <artifactId>sonar-maven-plugin</artifactId>
+					          <version>2.7.1</version>
+					        </plugin>
+					      </plugins>
+					    </pluginManagement>
+					    <plugins>
+					      <plugin>
+					        <groupId>org.codehaus.mojo</groupId>
+					        <artifactId>sonar-maven-plugin</artifactId>
+					        <version>2.7.1</version>
+					      </plugin>
+					    </plugins>
+				  	</build>
+				
+			sonar-runner
+			sonar-runner -v
+				http://jingyan.baidu.com/article/e75057f2a2ae8eebc91a8935.html
+
+	2、Sonar项目配置：
+		a、sonar-project.properties
+			#required metadata
+			#projectKey项目的唯一标识，不能重复。
+			sonar.projectKey=creativecloud
+			#projectName值不能是中文，否则web页面部分是乱码
+			sonar.projectName=creativecloud
+			sonar.projectVersion=v1.1.0
+			sonar.sourceEncoding=UTF-8
+			sonar.modules=java-module,javascript-module,html-module
+
+			# Java module
+			java-module.sonar.projectName=Java Module
+			java-module.sonar.language=java
+			# .表示projectBaseDir指定的目录
+			java-module.sonar.projectBaseDir=src
+			java-module.sonar.sources=.
+			sonar.binaries=classes
+
+			# JavaScript module
+			javascript-module.sonar.projectName=JavaScript Module
+			javascript-module.sonar.language=js
+			javascript-module.sonar.projectBaseDir=src/main/webapp
+			javascript-module.sonar.sources=common,js,other,static,WEB-INF
+
+			# Html module
+			html-module.sonar.projectName=Html Module
+			html-module.sonar.language=web
+			html-module.sonar.projectBaseDir=src/main/webapp/WEB-INF/views
+			html-module.sonar.sources=.
+
+		cd到项目sonar-project.properties文件目录，执行sonar-runner或者mvn sonar:sonar
+		注意：
+			sonar-runner执行会读取sonar-project.properties文件规则，同时会应用Sonar服务器配置的规则
+			mvn sonar:sonar执行经测试没有读取sonar-project.properties文件部分规则，但是会应用Sonar服务器配置的规则
+				在此想告诉大家，如果出现sonar-runner执行成功，mvn sonar:sonar执行失败，请直接设置Sonar服务器忽略规则，访问路径[配置->排除->文件->全局源码排除|排除的源文件|全局测试排除|包含的源文件|排除的测试文件|包含的测试文件]
+
+
+	3、常规异常处理：
+		a)、命令没有权限：
+			chmod a+x /usr/local/maven/apache-maven-3.3.9/bin/mvn
+			chmod a+x /usr/local/sonar/sonar-scanner-2.8/bin/sonar-runner
+		b)、不是内部命令：
+			source /etc/profile
+		c)、svn连接异常：
+			关闭SVN检查：http://blog.csdn.net/lao_pei/article/details/52104691
+				打开sonarqube的控制台，使用admin登录后 ，在配置->SCM->菜单中，将Disabled the SCM Sensor设置为true
+			设置SVN账号
+	
+	4、checkStyle插件
+		下载插件设置checkstyle_google.xml
+	5、findBugs插件
+	6、coverage插件
+			
+
+			

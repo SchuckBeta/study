@@ -1,0 +1,112 @@
+----------------------------------------------------------------------------------------------
+Maven生命周期
+----------------------------------------------------------------------------------------------
+前言：（先废话两句）
+	我倡导带着目的去学习，即带着问题去学习！以一个常规的技术学习，我们可能会有以下几个疑问！
+	1、Maven 是什么？对这个问题做一个简单的拓展，我们可以有以下几个疑问：
+		a、能干什么？
+		b、为什么要用它？
+		c、有其它替代方案么？
+	2、Maven 怎么用？当然这个问题可以引申为一下几点：
+		a、原理、规则是什么？
+		b、生命周期是什么？
+		c、怎样操作？
+	我们今天就带这以上2大点疑惑去了解Maven，学习Maven!
+
+
+正文：
+	1、Maven定义（或定位）
+		Maven是一个Java构建、版本管理工具，当然构建工具有很多(前端Webpack、fis、gulp;后端Ant、make;)。
+		Maven是一个Java依赖管理工具，通俗的讲就是管理jar包之间的关联关系。
+		a、所以从上面两句话我们可以了解到Maven是Java开发环境下的项目管理工具。
+		b、它能方便我们管理项目和项目依赖关系，更有利于我们开发大型应用。
+		c、当然现在也有更高级的工具Gradle，从功能上来说比Maven更强大，既然如此，那我们为什么不用Gradle而选用Maven呢？因为Maven的生态圈比较完善，插件众多！Gradle还比较新生！我相信未来Gradle还是主流！
+
+	2、Maven 使用：
+		a、Maven使用有几个原则（"约定优于配置"）
+			所谓的"约定优于配置"，在maven中并不是完全不可以修改的，只是一些配置的默认值而已。maven默认的文件存放结构如下：
+			1)、单项目管理
+			    /项目目录
+			        pom.xml 用于maven的配置文件
+			        /src 源代码目录
+			            /src/main 工程源代码目录
+			                /src/main/java 工程java源代码目录
+			            /src/main/resource 工程的资源目录
+			            /src/test 单元测试目录
+			                /src/test/java
+			        /target 输出目录，所有的输出物都存放在这个目录下
+			            /target/classes 编译之后的class文件
+
+			2)、多项目管理
+			    总项目/
+			        pom.xml 总项目的pom配置文件
+			        子项目1/
+			            pom.xml 子项目1的pom文件
+			        子项目2/
+			            pom.xml 子项目2的pom文件
+			
+			3)输出物定位：
+				groupId:artifactId:packaging:version 。比如org.springframework:spring:2.5 。每个部分的解释如下：
+	    		groupId 团体标识的约定。
+	    		artifactId 在groupId下的表示一个单独项目的唯一标识符。不要在artifactId中包含点号(.)。
+	    		version  项目的特定版本。开发中特殊的标识，版本加上一个"SNAPSHOT"的标记，SNAPSHOT ,LATEST ,RELEASE。 
+	    		packaging  项目的类型，默认是jar，类型为war的项目产生一个web应用。
+	    		classifier 一般都可以忽略classifiers。
+
+		b、生命周期（可以执行特定的生命周期，执行某一个生命周期，它对应的前置周期也将执行）
+			生命周期	阶段描述
+			validate 	验证项目是否正确，以及所有为了完整构建必要的信息是否可用
+			generate-sources 	生成所有需要包含在编译过程中的源代码
+			process-sources 	处理源代码，比如过滤一些值
+			generate-resources 	生成所有需要包含在打包过程中的资源文件
+			process-resources 	复制并处理资源文件至目标目录，准备打包
+			compile 	编译项目的源代码
+			process-classes 	后处理编译生成的文件，例如对Java类进行字节码增强（bytecode enhancement）
+			generate-test-sources 	生成所有包含在测试编译过程中的测试源码
+			process-test-sources 	处理测试源码，比如过滤一些值
+			generate-test-resources 	生成测试需要的资源文件
+			process-test-resources 	复制并处理测试资源文件至测试目标目录
+			test-compile 	编译测试源码至测试目标目录
+			test 	使用合适的单元测试框架运行测试。这些测试应该不需要代码被打包或发布
+			prepare-package 	在真正的打包之前，执行一些准备打包必要的操作。这通常会产生一个包的展开的处理过的版本（将会在Maven 2.1+中实现）
+			package 	将编译好的代码打包成可分发的格式，如JAR，WAR，或者EAR
+			pre-integration-test 	执行一些在集成测试运行之前需要的动作。如建立集成测试需要的环境
+			integration-test 	如果有必要的话，处理包并发布至集成测试可以运行的环境
+			post-integration-test 	执行一些在集成测试运行之后需要的动作。如清理集成测试环境。
+			verify 	执行所有检查，验证包是有效的，符合质量规范
+			install 	安装包至本地仓库，以备本地的其它项目作为依赖使用
+			deploy 	复制最终的包至远程仓库，共享给其它开发人员和项目（通常和一次正式的发布相关）
+
+			核心节点：
+				clean：清理构建时候创建的文件。
+				compiler：编译项目源码。
+				test：执行单元测试(会生成测试文档)。
+				package：打包
+				install：本地 Repository安装jar
+				deploy：发布jar到私服
+				site：生成项目相关信息的网站、生成文档、报表
+
+		c、怎样操作？
+			1)、自定义maven插件需要依赖于生命周期节点去执行
+			2)、命令:
+					mvn archetype:create ：创建 Maven 项目脚手架
+					mvn eclipse:eclipse ：生成 Eclipse 项目环境文件
+					mvn clean 清理
+    				mvn clean compile 清理，编译
+					mvn clean test 清理，执行测试
+    				mvn clean test-compile ：清理，编译测试代码
+					mvn clean package 清理，测试，打包
+					mvn clean install 清理，测试，打包，安装
+					mvn clean deploy 清理，测试，打包，安装，发布    
+
+				参数：
+					-X 查看执行详情
+						mvn 命令 -X
+					-Dmaven.test.skip=true 跳过测试（默认为false）
+						mvn 命令 -Dmaven.test.skip=true
+
+
+后记：
+	以上是Maven的常用的操作，如果有兴趣了解Maven插件的定义，一定要先熟悉Maven的生命周期
+
+	相关链接：http://www.cnblogs.com/suntingme/p/5392117.html

@@ -1,0 +1,222 @@
+----------------------------------------------------------------------------------------------
+Maven混淆插件-proguard-maven-plugin
+----------------------------------------------------------------------------------------------
+前言：
+	1、使用该插件目的：
+		保护源代码安全，防止反编译？
+	2、插件使用：
+		a、基于Maven使用（mvn clean package -Dmaven.test.skip=true）
+		b、GUI工具（这里不做讨论：地址：http://blog.csdn.net/zhangdaiscott/article/details/45368261）
+
+
+正文：
+	1、使用须知：
+		这里我们只介绍Maven使用的方式。
+		使用proguard-maven-plugin插件，需要依赖于maven-jar-plugin 生成jar包
+
+	2、这里我们着重说明插件的使用：
+		pom.xml配置：
+			<!-- 混淆代码 -->
+			<plugin>
+				<groupId>com.github.wvengen</groupId>
+				<artifactId>proguard-maven-plugin</artifactId>
+				<version>2.0.11</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>proguard</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<obfuscate>true</obfuscate>
+					<!-- <maxMemory>1024m</maxMemory> -->
+					<!-- <proguardVersion>4.8</proguardVersion> -->
+		            <!-- <includeDependency>false</includeDependency>  -->
+	          		<!-- attach 的作用是在 install 与 deploy 时将生成的 pg 文件也安装与部署 -->
+	          		<!-- <attachArtifactClassifier>pg</attachArtifactClassifier> -->
+					<!-- <attach>false</attach> -->
+
+	                <options>
+			    		<!-- <option>-dontobfuscate</option> -->
+	                    <!--忽略所有告警-->
+	                    <option>-ignorewarnings</option>
+	                    <!--不做 shrink -->
+	                    <!-- <option>-dontshrink</option> -->
+	                    <!--不做 optimize 优化 -->
+	                    <!-- <option>-dontoptimize</option> -->
+	                    <!--保持包注解类-->
+	                    <option>-keep class **.package-info</option>
+
+		            	<!-- <option>-allowaccessmodification</option> -->
+						<!-- <option>-injar ../jar(**.class) 或者-injar ../jar/in.jar</option> -->
+						    <!-- <option>-keep public class com.degoo.ui.ClientBackendStarter { public *; public static *; }</option> -->
+
+	                    <!-- <option>-dontskipnonpubliclibraryclasses</option> -->
+	                    <!-- <option>-dontskipnonpubliclibraryclassmembers</option> -->
+
+	                    <!--平行包结构（重构包层次），所有混淆的类放在 pg 包下-->
+	                    <!-- <option>-repackageclasses org.noahx.proguard.example.project2.pg</option> -->
+
+						<!--保持包注解类-->
+						<!-- <option>-keep class **.package-info</option> -->
+
+	                    <!-- 忽略泛型 以下为 Keep，哪些内容保持不变，因为有一些内容混淆后（a,b,c）导致反射或按类名字符串相关的操作失效 -->
+	                    <!--JAXB NEED，具体原因不明，不加会导致 JAXB 出异常，如果不使用 JAXB 根据需要修改-->
+						<!-- <option>-keepattributes Signature</option> -->
+
+	                    <!--保持源码名与行号（异常时有明确的栈信息），注解（默认会过滤掉所有注解，会影响框架的注解）-->
+	                    <!-- <option>-keepattributes SourceFile,LineNumberTable,*Annotation*</option> -->
+
+	                    <!--保持枚举中的名子，确保枚举 valueOf 可以使用-->
+	                    <!-- <option>-keepclassmembers enum org.noahx.proguard.example.project2.** { *;}</option> -->
+
+	                    <!--保持 Bean 类，（由于很多框架会对 Bean 中的内容做反射处理，请根据自己的业务调整） -->
+	                    <!-- <option>-keep class org.noahx.proguard.example.project2.bean.** { *;}</option> -->
+
+	                    <!-- 保持对外的接口性质类对外的类名与方法名不变 -->
+	                    <!-- <option>-keep class org.noahx.proguard.example.project2.Project2 { public void init(); public void
+	                        destroy(); }
+	                    </option> -->
+
+						<!-- 开始配置 -->
+	                    <!-- 以下为 Keep，哪些内容保持不变，因为有一些内容混淆后（a,b,c）导致反射或按类名字符串相关的操作失效 -->
+	                    <!--JAXB NEED，具体原因不明，不加会导致 JAXB 出异常，如果不使用 JAXB 根据需要修改-->
+	                    <option>-keepattributes Signature</option>
+
+	                    <!--保持源码名与行号（异常时有明确的栈信息），注解（默认会过滤掉所有注解，会影响框架的注解）-->
+	                    <option>-keepattributes SourceFile,LineNumberTable,*Annotation*</option>
+						<!-- 结束配置 -->
+
+						<option>-injars ${project.build.directory}/${project.artifactId}/WEB-INF/lib/${artifactId.finalName}.jar</option>
+	                </options>
+	                <outjar>${project.artifactId}/WEB-INF/lib/${artifactId.finalName}-out.jar</outjar>
+
+	                <outputDirectory>${project.build.directory}</outputDirectory>
+			        <proguardInclude>${basedir}/pom-proguard.cfg</proguardInclude>
+					<source>${jdk.version}</source>
+					<target>${jdk.version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<libs>
+						<lib>${java.home}/lib/rt.jar</lib>
+						<lib>${java.home}/lib/jsse.jar</lib>
+			            <lib>${java.home}/lib/jce.jar</lib>
+					</libs>
+			        <addMavenDescriptor>false</addMavenDescriptor>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>net.sf.proguard</groupId>
+						<artifactId>proguard-base</artifactId>
+						<version>5.3.3</version>
+						<scope>runtime</scope>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+		插件说明：
+			1)、插件版本为2.0.11
+				<plugin>
+					<groupId>com.github.wvengen</groupId>
+					<artifactId>proguard-maven-plugin</artifactId>
+					<version>2.0.11</version>
+				</plugin>
+
+			2)、<executions>指定插件在Maven的生命周期 package 阶段执行混淆操作（如果不清楚生命周期的请查看[Maven生命周期及常用操作]，如果此次配置的是pre-package，就会报出-injars 指定的jar文件不存在，原因是maven-jar-plugin插件是在package的周期时生成jar文件）
+				<plugin>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>proguard</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+			3)、<dependencies>定义该插件依赖于proguard-base插件，如果版本过低会出异常此处使用5.3.3版本
+				<plugin>
+					<dependencies>
+						<dependency>
+							<groupId>net.sf.proguard</groupId>
+							<artifactId>proguard-base</artifactId>
+							<version>5.3.3</version>
+							<scope>runtime</scope>
+						</dependency>
+					</dependencies>
+				</plugin>
+
+			4)、<configuration>定义插件配置，<outjar>定义混淆之后生成jar文件位置,<proguardInclude>定义引用的外部配置，其中<options>定义配置参数,对应参数也可以在外部文件里配置
+				<plugin>
+					<configuration>
+		                <options></options>
+		                <outjar>${project.artifactId}/WEB-INF/lib/${artifactId.finalName}-out.jar</outjar>
+			        	<proguardInclude>${basedir}/pom-proguard.cfg</proguardInclude>
+					</configuration>
+				</plugin>
+
+	2、插件的配置规则：(pom-proguard.cfg)文件
+		配置之前有几个注意点：（默认情况下会加载所有的类文件进行混淆）
+			1). 应该最大程度的熟悉项目的结构
+			2). 对于保留和非保留的代码应该注意代码之间的关联关系，防止保留的部分调用到未混淆部分而出现异常
+			3). 混淆后调试困难，有些问题不仅应该考虑混淆的问题，还应考虑proguard版本的问题（可能存在BUG）
+			4). 应当保留bean对象和action中的属性名称，防止jsp页面和action数据无法交互
+			5). 使用action的modeldriven 对象类型为List<T> 时，应当配置保留泛型
+			6). 采用annotation配置应该注意spring注入的方式是采用byName还是byType，防止因为代码混淆后无法按照指定的类型注入bean
+
+		配置之前Java项目文件类型及类属性、方法、修饰符和概念：
+			类（内部类）、接口、枚举、注解、属性、方法、修饰符、泛型、通配符（*）
+
+		配置常用配置项：
+			-keep {Modifier} {class_specification} 保护指定的类文件和类的成员
+			-keepclassmembers {modifier} {class_specification}  保护指定类的成员，如果此类受到保护他们会保护的更好
+			-keepclasseswithmembers {class_specification}    保护指定的类和类的成员，但条件是所有指定的类和类成员是要存在。
+			-keepnames {class_specification}    保护指定的类和类的成员的名称（如果他们不会压缩步骤中删除）
+			-keepclassmembernames {class_specification}    保护指定的类的成员的名称（如果他们不会压缩步骤中删除）
+			-keepclasseswithmembernames {class_specification}    保护指定的类和类的成员的名称，如果所有指定的类成员出席（在压缩步骤之后）
+
+		配置实例：
+			[排除包]：排除org.开头包下的所有文件
+				#org
+				-keep enum org.** {*;}
+				-keep class org.** {*;}
+				-keep interface org.** {*;}
+				-keep @interface org.** {*;}
+
+				-keep public enum org.** {*;}
+				-keep public class org.** {*;}
+				-keep public interface org.** {*;}
+				-keep public @interface org.** {*;}
+
+				说明：如果只是加了public时，内部类是没法排除的需要加上 -keep class org.** {*;} 这一句才能排除内部类
+
+			[排除继承类]：排除javax.servlet.Servlet类的所有子类
+				#javax.servlet.Servlet
+				-keep class * extends javax.servlet.Servlet
+				-keep public class * extends javax.servlet.Servlet
+				
+			[排除实现类]：排除java.io.Serializable接口的实现类
+				#java.io.Serializable
+				-keep class * implements java.io.Serializable
+				-keep public class * implements java.io.Serializable
+
+			[排除类成员]：排除com.oseasy.initiate.common.persistence.BaseEntity类
+				#com.oseasy.initiate.common.persistence.BaseEntity
+				[类的实现类的类名]
+					-keepnames class * implements com.oseasy.initiate.common.persistence.BaseEntity
+				[类的实现类的属性]
+					-keepclassmembers class * implements com.oseasy.initiate.common.persistence.BaseEntity {
+					    public protected private <fields>;
+					}
+				[类的实现类的方法]
+					-keepclassmembers class * implements com.oseasy.initiate.common.persistence.BaseEntity {
+					    public protected private <methods>;
+					}
+
+
+后记：
+	以上是Maven代码混淆插件使用说明，在此附上几个地址供更多学习和解决问题!
+		混淆插件常用异常及解决方案：https://www.guardsquare.com/en/proguard/manual/troubleshooting#stacktraces
+		混淆插件官方教程：http://wvengen.github.io/proguard-maven-plugin/
+		GUI方式混淆操作说明：http://blog.csdn.net/zhangdaiscott/article/details/45368261
