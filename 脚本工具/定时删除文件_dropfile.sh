@@ -1,1 +1,0 @@
-find /opt/reveive/data/done -type f -mtime +7 -print | xargs rm -rf
