@@ -1,49 +1,73 @@
-----------------------------------------------------------------------------------------------
-Git常用操作
+﻿----------------------------------------------------------------------------------------------
+Git操作指导
 ----------------------------------------------------------------------------------------------
 前言：
-	1、为什么使用Git：
+	11：Git由来
+	21、为什么使用Git：
 		a、为什么要抛弃Svn、Cvs等版本控制工具？
-	2、Git怎么使用：
-		a、Git相关概念
-		b、Git基本安装
-		c、Git常用命令
-	3、Git相关生态：
+	31、Git怎么使用：
+		a、Git基本安装
+		b、Git相关概念
+		c、Git仓库
+		d、Git常用命令
+	41、Git与SVN相似点
+	51、Git相关生态：
 		a、GitHub、GitLab、Gerrit
 
 
 正文：
-	1、为什么使用Git：
-		a、对于软件开发中，代码版本控制是很有必要的，大家熟悉的有SVN工具，而Git相比SVN而言，SVN是（集中式）服务器、客户端的结构，Git(分布式)，每一台主机节点既是服务器，同时也是客户端，能够简单方便的实现代码版本、分支、合并、授权、发布相关控制，具体详情，请查看下列地址。
-			原理解析及操作：http://www.ruanyifeng.com/blog/2015/12/git-cheat-sheet.html
-			整体概述图：http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/001374027586935cf69c53637d8458c9aec27dd546a6cd6000
-			安装操作：http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/00137396287703354d8c6c01c904c7d9ff056ae23da865a000
+	11：Git由来
+		开源：开源社区
+		Linus(莱纳斯)、Linux、Git、开源、代码仓库
+		由来：
+			http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/00137402760310626208b4f695940a49e5348b689d095fc000
 
-	2、Git怎么使用：
-		a、Git基本安装
+	21、为什么使用Git：
+		a、对于软件开发中，代码版本控制是很有必要的，大家熟悉的有SVN工具，而Git相比SVN而言，SVN是（集中式）服务器、客户端的结构，Git(分布式)，每一台主机节点既是服务器，同时也是客户端，能够简单方便的实现代码版本、分支、合并、授权、发布相关控制，具体详情，请查看下列地址。
+			集中式Vs分布式:http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/001374027586935cf69c53637d8458c9aec27dd546a6cd6000
+
+	31、Git怎么使用：
+		a、Git基本安装（Git Community Book 中文版.pdf-20页）
 			Window环境：
 				Git-2.9.3.2-64-bit.exe
 				TortoiseGit-1.8.9.0-64bit.msi
 				TortoiseGit-LanguagePack-1.8.9.0-64bit-zh_CN.msi
-			CentOs环境：
-				yum install git
+			CentOs环境（在redhat等系统下用yum）：
+				yum install git-core
 				yum install gitLab
-			Ubuntu环境：
-				sudo apt-get install git
+			Ubuntu环境(在debian, ubuntu等系统下用apt-get)：
+				sudo apt-get install git-core
 			Docker环境（拓展）：
 				使用docker镜像安装gitLab，相关资料请参考（关于docker的细节我们将在另外章节介绍）：
+				镜像仓库：
+					https://dashboard.daocloud.io/build-flows/new
 					http://get.daocloud.io/#install-docker-for-mac-windows
 					https://c.163.com/hub#/m/home/
 					https://csphere.cn/hub
 
-		a、Git相关概念
+		b、Git相关概念
 	        Workspace：工作区
 	        Index / Stage：暂存区
 	        Repository：仓库区（或本地仓库）
 	        Remote：远程仓库
+	        Git概念解析及操作：
+	        	http://www.ruanyifeng.com/blog/2015/12/git-cheat-sheet.html
 
-		b、Git常用命令
+		c、Git仓库(Git仓库.png)
+			GitHub，GitLab，BitBucket，Coding....
+			GitHub：https://github.com/SchuckBeta
+			BitBucket：http://192.168.0.107:7990/
+
+		d、Git常用命令
 			Git的设置文件为.gitconfig，它可以在用户主目录下（全局配置），也可以在项目目录下（项目配置）。
+				如：C:\Users\Administrator\.gitconfig
+
+			Git目录结构：
+				F:\work\doc\study\Git\git目录.png
+
+			Git命令：
+				F:\work\doc\study\Git\Git常用命令.jpg
+
 			    # 显示当前的Git配置
 			    $ git config --list
 
@@ -93,6 +117,15 @@ Git常用操作
 				    $ git clone [url]
 				    # 下载一个项目某一个特定分支（dev）代码历史
 				    $ git clone -b dev [url]
+
+				3）分支：
+					# 列出所有本地分支
+					$ git branch
+
+					# 新建本地dev分支
+					$ git branch dev
+
+					//在此我们创建4个分支备用[dev	test	105		107]
 
 			增加/删除文件	
 			    # 添加指定文件到暂存区
@@ -164,7 +197,17 @@ Git常用操作
 				$ git branch -dr [remote/branch]
 
 
-	3、Git相关生态：
-		a、GitHub：https://github.com/SchuckBeta
-		b、GitLab：私有仓库
-		c、Gerrit：代码审查系统：http://blog.csdn.net/ganshuyu/article/details/8978614
+	41、Git与SVN相似点：
+			F:\work\doc\study\Git\Git Vs Svn.png
+
+	51、Git相关生态：
+		a、GitHub：开源仓库
+		b、GitLab：私有仓库（BitBucket）
+		c、Gerrit：
+			代码审查系统：http://blog.csdn.net/ganshuyu/article/details/8978614
+
+
+总结：
+	PDF：F:\work\doc\study\Git\Git Community Book 中文版.pdf
+	电子书：链接：http://pan.baidu.com/s/1hsMKiZq 密码：3ior
+	视频教程：链接：http://pan.baidu.com/s/1i5yv8W1 密码：i9fy
