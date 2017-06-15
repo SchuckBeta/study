@@ -1,0 +1,33 @@
+﻿----------------------------------------------------------------------------------------------
+Git使用指南-merge操作
+----------------------------------------------------------------------------------------------
+前言：
+	Git分支操作时代码合并相关指导（命令行模式）
+
+
+正文：
+	本文以将bug(Bug分支)合并到dev(开发分支)为例子：
+
+    整理待合并分支（Bug分支）到最新（需要合并的范围）
+        git checkout bug   切换到Bug分支
+        git status   查看当前Bug分支的状态
+            如果有新文件或者文件变更，请执行[git add .] 和 [git commit -m ""] 提交代码
+
+        git pull origin bug  更新Bug分支代码到最新
+
+        git push origin bug 发布代码到远程Bug分支
+
+    整理目标分支（dev分支）到最新
+        git checkout dev   切换到Dev分支
+        git status   查看当前Dev分支的状态
+            如果有新文件或者文件变更，请执行[git add .] 和 [git commit -m ""] 提交代码
+
+        git pull origin dev  更新Dev分支代码到最新
+        git merge bug  将Bug分支合并到Dev分支
+            如果有冲突，命令行显示（dev|committing）,此时需要解决冲突
+            git status   查看冲突文件（红色文件-可以使用IDE、记事本、Git GUI）
+            冲突解决请执行[git add .] 和 [git commit -m ""] 提交代码，此时committing消失，如果还未消失，说明还有冲突，请重复3部操作
+
+        git merge bug 建议重新合并一次（避免前一次出现冲突没有合并成功）
+            合并成功会显示  Already up-to-date
+        git push origin dev 发布代码到远程Dev分支
