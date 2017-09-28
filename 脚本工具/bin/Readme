@@ -1,0 +1,47 @@
+﻿					双创项目
+----------------------------------------------------------------------------------------------
+本文件将向您阐述位于双创项目部署目录下的bin下的所有文件的作用，以及您该如何使用这些
+文件来完成双创产品的安装、使用和管理。
+Copyright 2017 by oseasy. All rights reserved.
+----------------------------------------------------------------------------------------------
+安装步骤
+（注意安装完成后先导数据 最后在启动tomcat）
+1 sh installtomcat.sh  安装tomcat
+2 sh setconfig.sh  根据菜单安装对应的服务
+    0) 基础设置（防火墙 域名 ulimit等）
+    1) 安装并启动mysql
+    2）修改mysql默认密码
+    3）设置并启动vsftpd服务
+    4）设置并启动nginx服务
+    5）设置并启动redis
+    6) 导入数据至mysql
+    7) 设置并启动tomcat (设置tomcat 但不要启动，先校验下其他服务是否都启动 checkconfig.sh)
+    8) 启动tomcat (startup.sh)
+4 sh importmyql.sh   导入数据至数据库
+
+5 校验服务是否启动的脚本  checkconfig.sh
+6 启动各服务的脚本 startapply.sh
+7 setjvmoptions.sh TODO
+   该文件用于配置双创项目运行期间相关的环境配置，包括开机自启动服务运行用户以及性能参数。
+   其中性能参数配置包括初始内存大小，最大内存大小等。
+   如果您希望对双创项目服务的性能进行调优，您可以对该文件中参数进行配置。
+8  startup.sh
+   该文件用于启动双创对应的web服务，目前为tomcat。
+   如果您希望直接启动双创项目，则可以执行该文件启动双创服务。启动前必须保证 依赖的服务都启动完成。
+9  restartapply.sh
+   该文件用于重新启动双创对应的服务，目前支持redis,nginx,vsftp,mysql。
+10 install_tomcat.sh
+   该文件用于安装tomcat服务,如果您只是希望启动双创服务,建议直接运行startup.sh脚本。
+11 importmysql.sh    数据库导入
+
+12 upgradeproject.sh 项目升级
+    (1) 停服务同时升级项目
+    (2) 备份数据库
+    (3) 导入数据导数据库
+    (4) 清空缓存
+    (5) 启动tomcat
+13  backupmysql.sh  数据库备份
+14  sourcemyql.sh    数据库导入 对应bakcup_mysql.sh导出的sql
+
+
+

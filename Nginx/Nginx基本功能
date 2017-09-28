@@ -1,0 +1,82 @@
+----------------------------------------------------------------------------------------------
+Nginx基本功能
+----------------------------------------------------------------------------------------------
+常用命令：
+
+lsof -i :80
+
+netstat -lntup|grep nginx|grep -v grep
+
+nginx -c /etc/nginx/nginx.conf -s reload   平滑启动
+
+nginx -c /etc/nginx/nginx.conf 启动
+
+
+nginx -t 配置文件是否正确
+
+1、nginx的虚拟主机的配置
+2、Nginx的反向代理
+3、Nginx的负载均衡
+4、Nginx的高可用
+
+1）虚拟主机（虚拟主机的原理是通过HTTP请求头中的Host是否匹配server_name来实现）
+server {
+     listen 80 default_server;
+     server_name _;
+     return 444; # 过滤其他域名的请求，返回444状态码
+}
+server {
+     listen 80;
+     server_name www.front.com; # www.front.com域名
+     location / {
+     proxy_pass http://localhost:8080; # 对应端口号8080
+     }
+}
+server {
+     listen 80;
+     server_name www.admin.com; # www.admin.com域名
+     location / {
+     proxy_pass http://localhost:8081; # 对应端口号8081
+    }
+}
+
+2）负载均衡
+
+ 
+
+upstream oseasy{
+     server 192.168.0.111:8080; # 应用服务器1
+     server 192.168.0.112:8080; # 应用服务器2
+}
+server {
+     listen 80;
+     location / {
+     proxy_pass http://oseasy;
+     }
+}
+
+3）反向代理
+
+
+server {
+    listen 80;
+    location / {
+    proxy_pass http://192.168.0.111:8080; # 应用服务器HTTP地址
+    }
+}
+
+ 4）静态HTTP服务器
+
+ 
+
+server {
+   listen 80; # 端口号
+   location / {
+   root /usr/share/nginx/html; # 静态文件路径
+   }
+}
+
+ 
+
+5）FastCGI
+Nginx本身不支持PHP等语言，但是它可以通过FastCGI来将请求扔给某些语言或框架处理.

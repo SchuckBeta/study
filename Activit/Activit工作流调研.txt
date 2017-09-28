@@ -1,0 +1,178 @@
+----------------------------------------------------------------------------------------------
+Activit工作流调研
+----------------------------------------------------------------------------------------------
+前言：
+	1、工作流整合基于Jeesite项目：
+		a、目录结构？
+		b、目录详解？
+	2、工作流流程接口：
+		a、目录结构？
+
+
+正文：
+	1、工作流整合基于Jeesite项目：
+		a、目录结构：
+			后台：
+				流程目录:
+					\src\main\java\com\oseasy\initiate\modules\act
+					\src\main\java\com\oseasy\initiate\modules\act\web\ActModelController.java
+					\src\main\java\com\oseasy\initiate\modules\act\rest\editor\model\ModelSaveRestResource.java
+					
+				流程Rest接口资源目录:
+					\src\main\java\com\oseasy\initiate\modules\act\rest
+					\src\main\java\com\oseasy\initiate\modules\act\rest\editor\model\ModelEditorJsonRestResource.java
+					\src\main\java\com\oseasy\initiate\modules\act\rest\editor\model\ModelSaveRestResource.java
+					\src\main\java\com\oseasy\initiate\modules\act\rest\editor\main\StencilsetRestResource.java
+
+			前台：
+				流程编辑器目录:
+					\src\main\webapp\act\process-editor\editor-app
+				流程编辑器入口文件:
+					/act/process-editor/modeler.jsp?modelId=1966f90a436c48d8bdf2dc03d44967a4
+					\src\main\webapp\act\process-editor\editor-app\modeler.jsp
+					编辑器JS入口文件:
+						\src\main\webapp\act\process-editor\editor-app\app.js
+
+					编辑器配置文件:
+						\src\main\webapp\act\process-editor\editor-app\app-cfg.js
+						\src\main\webapp\act\process-editor\editor-app\editor-config.js
+						\src\main\webapp\act\process-editor\editor-app\configuration\url-config.js (重点)
+
+					编辑器工具条事件文件:
+						\src\main\webapp\act\process-editor\editor-app\configuration\toolbar-default-actions.js
+							
+					编辑器流程配置项Json文件:
+						\src\main\resources\stencilset.json
+						\src\main\webapp\act\process-editor\editor-app\editor\oryx.js
+						\src\main\webapp\act\process-editor\editor-app\editor\oryx.debug.js
+		
+		b、目录详解：
+			后台：
+				流程目录:
+					src\main\java\com\oseasy\initiate\modules\act
+					\src\main\java\com\oseasy\initiate\modules\act\web\ActModelController.java
+					创建流程模型：
+						public void create(String name, String key, String description, String category, HttpServletRequest request, HttpServletResponse response)
+							org.activiti.engine.repository.Model modelData = actModelService.create(name, key, description, category);
+							response.sendRedirect(request.getContextPath() + "/act/process-editor/modeler.jsp?modelId=" + modelData.getId());
+								调用repositoryService.saveModel(modelData) 
+									表act_ge_bytearray创建记录
+										INSERT INTO `creativecloud-flow`.`act_ge_bytearray` (`ID_`, `REV_`, `NAME_`, `DEPLOYMENT_ID_`, `BYTES_`, `GENERATED_`) VALUES ('78106793abd24914b71d288bb9f07524', '2', 'source', NULL, '{\"resourceId\":\"1966f90a436c48d8bdf2dc03d44967a4\",\"properties\":{\"process_id\":\"process\",\"name\":\"\",\"documentation\":\"\",\"process_author\":\"initiate\",\"process_version\":\"\",\"process_namespace\":\"http://www.activiti.org/processdef\",\"executionlisteners\":\"\",\"eventlisteners\":\"\",\"signaldefinitions\":\"\",\"messagedefinitions\":\"\"},\"stencil\":{\"id\":\"BPMNDiagram\"},\"childShapes\":[],\"bounds\":{\"lowerRight\":{\"x\":1200,\"y\":1050},\"upperLeft\":{\"x\":0,\"y\":0}},\"stencilset\":{\"url\":\"stencilsets/bpmn2.0/bpmn2.0.json\",\"namespace\":\"http://b3mn.org/stencilset/bpmn2.0#\"},\"ssextensions\":[]}', NULL);
+									表创建act_re_model记录
+										INSERT INTO `creativecloud-flow`.`act_re_model` (`ID_`, `REV_`, `NAME_`, `KEY_`, `CATEGORY_`, `CREATE_TIME_`, `LAST_UPDATE_TIME_`, `VERSION_`, `META_INFO_`, `DEPLOYMENT_ID_`, `EDITOR_SOURCE_VALUE_ID_`, `EDITOR_SOURCE_EXTRA_VALUE_ID_`, `TENANT_ID_`) VALUES ('1966f90a436c48d8bdf2dc03d44967a4', '2', '大赛-chenh', 'dasai-chenh', '1', '2017-05-27 16:28:45', '2017-05-27 16:28:45', '1', '{\"name\":\"大赛-chenh\",\"revision\":1,\"description\":\"大赛-chenh\"}', NULL, '78106793abd24914b71d288bb9f07524', NULL, '');
+					
+					\src\main\java\com\oseasy\initiate\modules\act\rest\editor\model\ModelSaveRestResource.java
+					编辑保存流程模型：
+						public void saveModel(@PathVariable String modelId, @RequestBody MultiValueMap<String, String> values)
+							repositoryService.saveModel(model);
+								表act_ge_bytearray创建记录
+									INSERT INTO `creativecloud-flow`.`act_ge_bytearray` (`ID_`, `REV_`, `NAME_`, `DEPLOYMENT_ID_`, `BYTES_`, `GENERATED_`) VALUES ('cb1651850a414d1aacc214f938f8b6a0', '1', 'source-extra', NULL, '�PNG\r\n\Z\n\0\0\0\rIHDR\0\0\02\0\0\02\0\0\0?��\0\0\0 cHRM\0\0z&\0\0��\0\0�\0\0\0��\0\0u0\0\0�`\0\0:�\0\0p��Q<\0\0\0gAMA\0\0��|�Q�\0\0\0sRGB\0���\0\0\0bKGD\0�\0�\0�����\0\0\0	pHYs\0\0�\0\0��+\0\0\0 IDATx���\0\0\0� ��nH@\0\0\0\0\0\0\0\0��\'B\0����\0\0\0\0IEND�B`�', NULL);
+
+
+				流程Rest接口目录:
+					src\main\java\com\oseasy\initiate\modules\act\rest
+					编辑器Model资源类:
+						\src\main\java\com\oseasy\initiate\modules\act\rest\editor\model\ModelEditorJsonRestResource.java
+							/act/service/model/{modelId}/json
+						\src\main\java\com\oseasy\initiate\modules\act\rest\editor\model\ModelSaveRestResource.java
+							/act/service/model/{modelId}/save
+						\src\main\java\com\oseasy\initiate\modules\act\rest\editor\main\StencilsetRestResource.java
+							/act/service/editor/stencilset
+			前台：
+				流程编辑器目录:
+					src\main\webapp\act\process-editor\editor-app
+				流程编辑器入口文件:
+					act/process-editor/modeler.jsp?modelId=1966f90a436c48d8bdf2dc03d44967a4
+					src\main\webapp\act\process-editor\editor-app\modeler.jsp
+					编辑器JS入口文件:
+						src\main\webapp\act\process-editor\editor-app\app.js
+							执行fetchModel(modelId)方法ajax请求/act/service/model/${modelId}/json地址
+							/act/service/model/1966f90a436c48d8bdf2dc03d44967a4/json 结果格式:
+								{"name":"大赛-chenh","revision":1,"description":"大赛-chenh","modelId":"1966f90a436c48d8bdf2dc03d44967a4","model":{"id":"canvas","resourceId":"canvas","properties":{"process_author":"initiate"},"stencilset":{"namespace":"http://b3mn.org/stencilset/bpmn2.0#"}}}
+
+							/act/service/model/1966f90a436c48d8bdf2dc03d44967a4/save 参数格式：
+							格式说明：
+								name 名称
+								description 描述
+								json_xml 生成xml文件配置
+									ModelSaveRestResource类源码：
+										repositoryService.addModelEditorSource(model.getId(), values.getFirst("json_xml").getBytes("utf-8"));
+								svg_xml 生成流程图配置
+									ModelSaveRestResource类源码：
+										InputStream svgStream = new ByteArrayInputStream(values.getFirst("svg_xml").getBytes("utf-8"));
+										TranscoderInput input = new TranscoderInput(svgStream);
+										PNGTranscoder transcoder = new PNGTranscoder();
+										// Setup output
+										ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+										TranscoderOutput output = new TranscoderOutput(outStream);
+										// Do the transformation
+										transcoder.transcode(input, output);
+
+							基本格式：
+								json_xml={"resourceId":"1966f90a436c48d8bdf2dc03d44967a4","properties":{"process_id":"process","name":"","documentation":"","process_author":"initiate","process_version":"","process_namespace":"http://www.activiti.org/processdef","executionlisteners":"","eventlisteners":"","signaldefinitions":"","messagedefinitions":""},"stencil":{"id":"BPMNDiagram"},"childShapes":[],"bounds":{"lowerRight":{"x":1200,"y":1050},"upperLeft":{"x":0,"y":0}},"stencilset":{"url":"stencilsets/bpmn2.0/bpmn2.0.json","namespace":"http://b3mn.org/stencilset/bpmn2.0#"},"ssextensions":[]}
+								
+								&svg_xml=<svg xmlns="http://www.w3.org/2000/svg" xmlns:oryx="http://oryx-editor.org" id="sid-19A38C99-68B2-4230-A8DD-6DCEFF5E289C" width="50" height="50" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg"><defs/><svg id="underlay-container"/><g stroke="none" font-family="Verdana, sans-serif" font-size-adjust="none" font-style="normal" font-variant="normal" font-weight="normal" line-heigth="normal" font-size="12"><g class="stencils"><g class="me"/><g class="children"/><g class="edge"/></g><g class="svgcontainer"><g display="none"><rect x="0" y="0" stroke-width="1" stroke="#777777" fill="none" stroke-dasharray="2,2" pointer-events="none"/></g><g display="none"><path stroke-width="1" stroke="silver" fill="none" stroke-dasharray="5,5" pointer-events="none"/></g><g display="none"><path stroke-width="1" stroke="silver" fill="none" stroke-dasharray="5,5" pointer-events="none"/></g><g/></g></g></svg>&name=大赛-chenh&description=大赛-chenh
+
+
+					编辑器配置文件:
+						\src\main\webapp\act\process-editor\editor-app\app-cfg.js
+						\src\main\webapp\act\process-editor\editor-app\editor-config.js
+						\src\main\webapp\act\process-editor\editor-app\configuration\url-config.js (重点)
+							KISBPM.URL.getModel(modelId);
+							KISBPM.URL.putModel(modelMetaData.modelId)})
+
+					编辑器工具条事件文件:
+						\src\main\webapp\act\process-editor\editor-app\configuration\toolbar-default-actions.js
+							当点击保存时提交了params参数（375）：
+								var params = {
+						            json_xml: json,
+						            svg_xml: svgDOM,
+						            name: $scope.saveDialog.name,
+						            description: $scope.saveDialog.description
+						        };
+
+						        json（350）：
+						        	var json = $scope.editor.getJSON();
+							        json = JSON.stringify(json);
+
+        						svgDOM（373）：
+        							var svgDOM = DataManager.serialize(svgClone);
+
+
+					编辑器流程配置项Json文件:
+						\src\main\resources\stencilset.json
+						\src\main\webapp\act\process-editor\editor-app\editor\oryx.js
+						\src\main\webapp\act\process-editor\editor-app\editor\oryx.debug.js
+		
+
+	2、工作流整合基于Jeesite项目：
+		repositoryService服务：
+			//ModelEntityManager
+			//创建Model
+			Model model = repositoryService.newModel();
+			//修改Model
+			repositoryService.saveModel(model);
+			//获取Model
+			repositoryService.getModel(modelId);
+
+			//导出Model到Xml
+			org.activiti.engine.repository.Model modelData = repositoryService.getModel(id);
+			BpmnJsonConverter jsonConverter = new BpmnJsonConverter();
+			JsonNode editorNode = new ObjectMapper().readTree(repositoryService.getModelEditorSource(modelData.getId()));
+			BpmnModel bpmnModel = jsonConverter.convertToBpmnModel(editorNode);
+			BpmnXMLConverter xmlConverter = new BpmnXMLConverter();
+			byte[] bpmnBytes = xmlConverter.convertToXML(bpmnModel);
+
+			ByteArrayInputStream in = new ByteArrayInputStream(bpmnBytes);
+			IOUtils.copy(in, response.getOutputStream());
+			String filename = bpmnModel.getMainProcess().getId() + ".bpmn20.xml";
+			response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+			response.flushBuffer();
+
+	3、思路总结：
+		根据json去动态生成流程模型部署！
+			项目流程生成后，直接生成流程模型（类比系统中的创建模型功能）！
+			项目关联流程后，项目发布，直接调用模型部署流程（部署接口查看项目中流程部署）！
+
+	4、根据原生Api入侵式动态生成流程部署：
+		请查阅：Activiti实战.pdf-21.1.2动态创建流程
