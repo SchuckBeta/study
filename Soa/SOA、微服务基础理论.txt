@@ -1,0 +1,132 @@
+----------------------------------------------------------------------------------------------
+SOA、微服务基础理论
+----------------------------------------------------------------------------------------------
+前言：
+    1、提问环节
+    2、SOA概念
+    3、SOA架构发展。（集群、分布式）
+    4、集中式 Vs 分布式
+    5、集群和分布式概念
+    6、OSGI概念
+    7、OSGI框架
+    8、OSGI（插件） Vs 微服务（模块）
+    9、微服务-分布式-OSGI
+    10、JAVA标准-SPI
+    11、JAVA-远程通信协议
+    12、微服务-框架选型
+    13、微服务-注册中心/服务网关
+    14、微服务-模块拆分
+    15、微服务-设计原则
+
+正文：
+            1、提问环节。
+                    面向？？？
+
+
+            2、SOA概念。
+
+                     https://baike.baidu.com/item/SOA/2140650 
+
+
+            3、SOA架构发展。（集群、分布式）
+
+                     http://jingyan.baidu.com/article/215817f79774c91edb142376.html 
+
+                     http://www.jiagoushuo.com/article/1000556.html 
+
+
+            4、集中式 Vs 分布式
+
+                     http://www.cnblogs.com/kuailingmin/p/4548052.html 
+
+                     https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/001374027586935cf69c53637d8458c9aec27dd546a6cd6000/ 
+
+                    关键字：并发、负载均衡、数据一致性、反向代理、网关、服务网关
+
+
+            5、集群和分布式概念
+
+                  分布式：一个业务分拆多个子业务，部署在不同的服务器上
+                  集群：同一个业务，部署在多个服务器上
+
+                   https://www.zhihu.com/question/20004877 
+ 
+
+            6、OSGI概念（动态模型-插件（bundle））
+
+                     https://baike.baidu.com/item/OSGI/16158?fr=aladdin 
+
+                     http://www.cnblogs.com/garfieldcgf/p/6378443.html 
+ 
+
+            7、OSGI框架
+
+                    Knopflerfish, Apache Felix, Equinox, Spring DM
+
+                     http://www.cnblogs.com/longkerdandy/archive/2010/09/29/OSGi_Compare.html 
+
+
+            8、OSGI（插件） Vs 微服务（模块）
+
+                    Java 模块 Jar（Plugin-太大）
+                    Java 模块 package（太小）
+                    Java 模块 服务 （多个包-业务）
+
+             9、微服务-分布式-OSGI
+
+                     http://blog.csdn.net/itd018/article/details/51035176 
+
+                    
+            10、JAVA标准-SPI
+                     http://www.cnblogs.com/javaee6/p/3714719.html 
+                     http://www.cnblogs.com/zhongkaiuu/articles/5040971.html 
+            11、JAVA-远程通信协议（RPC（XML-RPC 、Binary- RPC），Webservice，RMI，JMS，Hessian，SOAP、CORBA 的区别）
+                       http://blog.csdn.net/shan9liang/article/details/8995023 
+
+            12、微服务-框架选型（Dubbox、Dubbox、HSF、Spring Cloud）
+
+                    Dubbox、Dubbox、HSF 
+
+                         http://www.cnblogs.com/langtianya/p/5720275.html 
+
+                    Doubbo 相关概念
+
+                        Zookeeper、Dubbo Admin
+
+
+                    Spring Cloud
+
+                         https://baike.baidu.com/item/spring%20cloud/20269825?fr=aladdin 
+
+                    Doubbo 相关概念    
+                        Spring Cloud Netflix  是对Netflix开发的一套分布式服务框架的封装，包括服务的发现和注册，负载均衡、断路器、REST客户端、请求路由等。
+                        Spring Cloud Eureka 是 Spring Cloud Netflix 微服务套件中的一部分，它基于Netflix Eureka 做了二次分装，主要负责完成微服务架构中的服务治理功能。
+
+                        Spring Cloud Config  将配置信息中央化保存, 配置Spring Cloud Bus可以实现动态修改配置文件。
+
+                        Spring Cloud Bus  分布式消息队列，是对Kafka, MQ的封装
+
+                        Spring Cloud Security 对Spring Security的封装，并能配合Netflix使用
+
+                        Spring Cloud Zookeeper 对Zookeeper的封装，使之能配置其它Spring Cloud的子项目使用
+
+                
+            13、微服务-注册中心/服务网关
+
+                   Zookeeper、Dubbo Admin、Dubbo
+
+                   Spring Boot、Spring Cloud Eureka、Spring Cloud  Consul、Spring Cloud Zookeeper、SpringCloud Zuul
+
+                   SpringCloud Ribbon、SpringCloud Feign、SpringCloud Hystrix、Spring Cloud Bus、Spring Cloud Config
+
+                     
+            14、微服务-模块拆分
+
+                     http://www.tuicool.com/articles/F3ayeuJ 
+
+
+            15、微服务-设计原则（核心思想：分而治之、解耦 ）
+
+                     原子服务、组合服务、编排服务
+
+                     服务自治、职责单一性（边界清晰）、避免循环依赖、粒度适中 
