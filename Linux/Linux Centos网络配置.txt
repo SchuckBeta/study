@@ -1,0 +1,35 @@
+虚拟机用桥接模式  
+#vi  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+
+DEVICE=eth0
+BOOTPROTO=static
+HWADDR=00:0c:29:6b:02:57
+TYPE=Ethernet
+UUID="0aab834f-eb42-46b1-97ff-ffc8a513bad8"
+ONBOOT=yes
+NM_CONTROLLED=yes
+IPV6INIT=no
+USERCTL=no
+IPADDR=192.168.1.3
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+
+DNS1=192.168.11.246
+
+#service network restart
+
+
+“Device eth0 does not seem to be present”解决办法  
+
+解决办法1：
+# mv /etc/sysconfig/network-scripts/ifcfg-eth0  /etcsysconfig/network-scripts/ifcfg-eth1
+将eth0的mac地址改为eth1的mac地址，同时改变其DEVICE名称为eth1，再重启网络即可。
+形如：HWADDR="00:0C:29:90:A7:23" 
+解决办法2：
+# rm -rf /etc/udev/rules.d/70-persistent-net.rules
+# reboot
+#vi  /etc/sysconfig/network-scripts/ifcfg-eth0  /etcsysconfig/network-scripts/ifcfg-eth0
+形如：HWADDR="00:0C:29:90:A7:23"
+# reboot
+#service network restart
