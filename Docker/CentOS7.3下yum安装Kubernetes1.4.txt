@@ -1,0 +1,559 @@
+在CentOS7.3下yum安装Kubernetes1.4傻瓜教程
+
+一、前言
+
+
+Kubernetes 是Google开源的容器集群管理系统，基于Docker构建一个容器的调度服务，提供资源调度、均衡容灾、服务注册、动态扩缩容等功能套件，目前centos yum源上最新版本为1.4。本文介绍如何基于Centos7.3构建Kubernetes平台，在正式介绍之前，大家有必要先理解Kubernetes几个核心概念及其承担的功能。以下为Kubernetes的架构设计图： 
+ 
+
+1. Pods 
+在Kubernetes系统中，调度的最小颗粒不是单纯的容器，而是抽象成一个Pod，Pod是一个可以被创建、销毁、调度、管理的最小的部署单元。比如一个或一组容器。 
+2. Replication Controllers 
+Replication Controller是Kubernetes系统中最有用的功能，实现复制多个Pod副本，往往一个应用需要多个Pod来支撑，并且可以保证其复制的副本数，即使副本所调度分配的主宿机出现异常，通过Replication Controller可以保证在其它主宿机启用同等数量的Pod。Replication Controller可以通过repcon模板来创建多个Pod副本，同样也可以直接复制已存在Pod，需要通过Label selector来关联。 
+3. Services 
+Services是Kubernetes最外围的单元，通过虚拟一个访问IP及服务端口，可以访问我们定义好的Pod资源，目前的版本是通过iptables的nat转发来实现，转发的目标端口为Kube_proxy生成的随机端口，目前只提供GOOGLE云上的访问调度，如GCE。如果与我们自建的平台进行整合？请关注下篇《kubernetes与HECD架构的整合》文章。 
+4. Labels 
+Labels是用于区分Pod、Service、Replication Controller的key/value键值对，仅使用在Pod、Service、 Replication Controller之间的关系识别，但对这些单元本身进行操作时得使用name标签。 
+5. Proxy 
+Proxy不但解决了同一主宿机相同服务端口冲突的问题，还提供了Service转发服务端口对外提供服务的能力，Proxy后端使用了随机、轮循负载均衡算法。 
+6. Deployment 
+Kubernetes Deployment提供了官方的用于更新Pod和Replica Set（下一代的Replication Controller）的方法Kubernetes Deployment提供了官方的用于更新Pod和Replica Set（下一代的Replication Controller）的方法，您可以在Deployment对象中只描述您所期望的理想状态（预期的运行状态），Deployment控制器为您将现在的实际状态转换成您期望的状态，例如，您想将所有的webapp:v1.0.9升级成webapp:v1.1.0，您只需创建一个Deployment，Kubernetes会按照Deployment自动进行升级。现在，您可以通过Deployment来创建新的资源（pod，rs，rc），替换已经存在的资源等。 
+Deployment集成了上线部署、滚动升级、创建副本、暂停上线任务，恢复上线任务，回滚到以前某一版本（成功/稳定）的Deployment等功能，在某种程度上，Deployment可以帮我们实现无人值守的上线，大大降低我们的上线过程的复杂沟通、操作风险
+
+二、Kubernetes集群部署
+
+平台版本说明
+节点	IP地址	CPU	内存
+master	192.168.3.51	4核	4GB
+etcd	192.168.3.52	1核	2GB
+node1	192.168.3.53	1核	2GB
+node2	192.168.3.54	1核	2GB
+系统初始化安装（所有主机）-选择【最小化安装】,然后yum update,升级到最新版本
+
+yum update
+
+yum install -y etcd kubernetes ntp flannel
+
+更改Hostname为 master、etcd、node1、node2，配置IP地址,配置4台测试机的/etc/hosts文件
+
+[root@master ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1 localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.3.51 master
+192.168.3.52 etcd
+192.168.3.53 node1
+192.168.3.54 node2
+[root@master ~]# 
+
+
+时间校对
+ntpdate ntp1.aliyun.com
+hwclock -w
+
+
+关闭CentOS7自带的防火墙服务
+systemctl disable firewalld; systemctl stop firewalld
+
+
+配置etcd服务器
+[root@etcd ~]# grep -v '^#' /etc/etcd/etcd.conf 
+ETCD_NAME=default
+ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
+ETCD_LISTEN_CLIENT_URLS="http://localhost:2379,http://192.168.3.52:2379"
+ETCD_ADVERTISE_CLIENT_URLS="http://192.168.3.52:2379"
+[root@etcd ~]#
+
+
+启动服务
+systemctl start etcd
+systemctl enable etcd
+
+检查etcd cluster状态
+[root@etcd ~]# etcdctl cluster-health   
+member 8e9e05c52164694d is healthy: got healthy result from http://192.168.3.52:2379
+cluster is healthy
+[root@etcd ~]# 
+
+检查etcd集群成员列表，这里只有一台
+[root@etcd ~]# etcdctl member list
+8e9e05c52164694d: name=default peerURLs=http://localhost:2380 clientURLs=http://192.168.3.52:2379 isLeader=true
+[root@etcd ~]# 
+
+配置防火墙   
+firewall-cmd --zone=public --add-port=2379/tcp --permanent
+firewall-cmd --zone=public --add-port=2380/tcp --permanent
+firewall-cmd --reload
+firewall-cmd --list-all
+配置master服务器
+
+1) 配置kube-apiserver配置文件
+
+[root@master ~]# grep -v '^#' /etc/kubernetes/config 
+KUBE_LOGTOSTDERR="--logtostderr=true"
+KUBE_LOG_LEVEL="--v=0"
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+KUBE_MASTER="--master=http://192.168.3.51:8080"
+[root@master ~]# 
+
+
+[root@master ~]# grep -v '^#' /etc/kubernetes/apiserver
+
+
+[root@master ~]# grep -v '^#' /etc/kubernetes/apiserver 
+KUBE_API_ADDRESS="--insecure-bind-address=0.0.0.0"
+KUBE_ETCD_SERVERS="--etcd-servers=http://192.168.3.52:2379"
+KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
+KUBE_ADMISSION_CONTROL="--admission-control=AlwaysAdmit"
+KUBE_API_ARGS=""
+[root@master ~]# 
+
+2) 配置kube-controller-manager配置文件
+[root@master ~]# grep -v '^#' /etc/kubernetes/controller-manager  
+KUBE_CONTROLLER_MANAGER_ARGS=""
+[root@master ~]# 
+
+3) 配置kube-scheduler配置文件
+[root@master ~]# grep -v '^#' /etc/kubernetes/scheduler 
+KUBE_SCHEDULER_ARGS="--address=0.0.0.0"
+[root@master ~]# 
+
+4) 启动服务
+for SERVICES in  kube-apiserver kube-controller-manager kube-scheduler
+do 
+    systemctl restart SERVICES
+done
+
+配置node1节点服务器
+
+1) 配置etcd
+[root@etcd ~]# etcdctl set /k8s/network/config '{"Network": "10.255.0.0/16"}'
+{"Network": "10.255.0.0/16"}
+[root@etcd ~]# etcdctl get /k8s/network/config   
+{"Network": "10.255.0.0/16"}
+[root@etcd ~]# 
+
+
+2) 配置node1网络，本实例采用flannel方式来配置，如需其他方式，请参考Kubernetes官网。
+[root@node1 ~]# grep -v '^#' /etc/sysconfig/flanneld 
+FLANNEL_ETCD_ENDPOINTS="http://192.168.3.52:2379"
+FLANNEL_ETCD_PREFIX="/k8s/network"
+FLANNEL_OPTIONS="--iface=ens33"        
+[root@node1 ~]# 
+备注：ens33用ip a命令获取，根据实际情况更改
+
+3) 配置node1 kube-proxy
+[root@node1 ~]# grep -v '^#' /etc/kubernetes/config 
+KUBE_LOGTOSTDERR="--logtostderr=true"
+KUBE_LOG_LEVEL="--v=0"
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+KUBE_MASTER="--master=http://192.168.3.51:8080"
+[root@node1 ~]# 
+
+[root@node1 ~]# grep -v '^#' /etc/kubernetes/proxy                  
+KUBE_PROXY_ARGS="--bind=address=0.0.0.0"
+[root@node1 ~]# 
+
+4) 配置node1 kubelet
+[root@node1 ~]# grep -v '^#' /etc/kubernetes/kubelet 
+KUBELET_ADDRESS="--address=127.0.0.1"
+KUBELET_HOSTNAME="--hostname-override=node1"
+KUBELET_API_SERVER="--api-servers=http://192.168.3.51:8080"
+KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image=registry.access.redhat.com/rhel7/pod-infrastructure:latest"
+KUBELET_ARGS=""
+[root@node1 ~]#
+
+5) 启动node1服务
+for SERVICES in flanneld kube-proxy kubelet; do
+    systemctl restart $SERVICES
+    systemctl enable $SERVICES
+    systemctl status $SERVICES 
+done
+
+配置node2节点服务器
+
+1) 配置node2网络，本实例采用flannel方式来配置，如需其他方式，请参考Kubernetes官网。
+[root@node2 ~]# grep -v '^#' /etc/sysconfig/flanneld 
+FLANNEL_ETCD_ENDPOINTS="http://192.168.3.52:2379"
+FLANNEL_ETCD_PREFIX="/k8s/network"
+FLANNEL_OPTIONS="--iface=eno16777736"        
+[root@node2 ~]# 
+备注：eno16777736用ip a命令获取，根据实际情况更改
+
+2) 配置node2 kube-proxy
+[root@node2 ~]# grep -v '^#' /etc/kubernetes/config 
+KUBE_LOGTOSTDERR="--logtostderr=true"
+KUBE_LOG_LEVEL="--v=0"
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+KUBE_MASTER="--master=http://192.168.3.51:8080"
+[root@node2 ~]# 
+
+[root@node2 ~]# grep -v '^#' /etc/kubernetes/proxy                  
+KUBE_PROXY_ARGS="--bind-address=0.0.0.0"
+[root@node2 ~]# 
+
+3) 配置node2 kubelet
+[root@node2 ~]# grep -v '^#' /etc/kubernetes/kubelet 
+KUBELET_ADDRESS="--address=127.0.0.1"
+KUBELET_HOSTNAME="--hostname-override=node1"
+KUBELET_API_SERVER="--api-servers=http://192.168.3.51:8080"
+KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image=registry.access.redhat.com/rhel7/pod-infrastructure:latest"
+KUBELET_ARGS=""
+[root@node2 ~]#
+
+4) 启动node2服务
+for SERVICES in flanneld kube-proxy kubelet docker; do
+    systemctl restart $SERVICES
+    systemctl enable $SERVICES
+    systemctl status $SERVICES 
+done
+至此，整个Kubernetes集群搭建完毕
+
+[root@master ~]# kubectl get nodes   
+NAME      STATUS    AGE
+node1     Ready     34m
+node2     Ready     2m
+[root@master ~]#
+
+三、在上面的集群上搭建基于redis和docker的留言簿案例
+
+1、启动Redis master 
+使用deployment确保只有一个pod在运行（当某个节点down了，deploy会在另一个健康的node启动redis master），但可能会有数据丢失。
+
+[root@master guestbook]# kubectl create -f redis-master-deployment.yaml 
+deployment "redis-master" created
+[root@master guestbook]#
+
+[root@master guestbook]# kubectl get deploy
+NAME           DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+redis-master   1         1         1            1           3m
+[root@master guestbook]# 
+
+[root@master guestbook]# kubectl get pods
+NAME                           READY     STATUS    RESTARTS   AGE
+redis-master-517881005-c3qek   1/1       Running   0          4m
+[root@master guestbook]# 
+
+2、启动master service 
+一个kubernetes service会对一个或多个Container进行负载均衡，这是通过我们上面redis-master中定义的labels元数据实现的，值得注意的是，在redis中只有一个master，但是我们依然为它创建一个service，这是因为这样我们就能使用一个elastic IP来路由到具体某一个master。 
+kubernetes集群中的service是通过container中的环境变量实现服务发现的，service基于pod label实现container的负载均衡。 
+在第一步中创建的pod包含了一个label“name=redis-master”，service的selector字段决定了service将流量转发给哪个pod，port和targetPort信息定义了service proxy运行在什么端口。
+
+[root@master guestbook]# kubectl create -f redis-master-service.yaml 
+service "redis-master" created
+[root@master guestbook]#
+
+root@master guestbook]# kubectl get svc
+NAME           CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+kubernetes     10.254.0.1               443/TCP    33m
+redis-master   10.254.203.144           6379/TCP   58s
+[root@master guestbook]# 
+上面的运行成功后，所有pods都能发现redis master运行在6379端口，从salve到master流量走向会有以下两步： 
+1) 一个redis slave会连接到redis master service的port上 
+2) 流量会从service节点上的port到targetPort,如果targetPort未指定，默认和port一致
+
+3、启动replicated slave pod 
+虽然redis master是一个单独的pod，redis slaves是一个replicated pod，在Kubernetes中，一个Replication Controller负责管理一个replicated pod的多个实例，RC会自动拉起down掉的replica（可以通过杀死docker 进程方式简单测试）
+
+[root@master guestbook]# kubectl create -f redis-slave-deployment.yaml 
+deployment "redis-slave" created
+[root@master guestbook]#
+
+
+[root@master guestbook]# kubectl get deploy
+NAME           DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+redis-master   1         1         1            1           17m
+redis-slave    2         2         2            2           24s
+[root@master guestbook]# 
+
+[root@master guestbook]# kubectl get pods -o wide
+NAME                           READY     STATUS    RESTARTS   AGE       IP            NODE
+redis-master-517881005-c3qek   1/1       Running   0          18m       10.255.73.2   node2
+redis-slave-1885102530-brg9b   1/1       Running   0          1m        10.255.73.3   node2
+redis-slave-1885102530-o8y5p   1/1       Running   0          1m        10.255.70.2   node1
+[root@master guestbook]#  
+可以看到一个master pod和两个slave pod
+4、启动slave service 
+和master一样，我们希望有一个代理服务连接到redis slave，除了服务发现之外，slave service还为web app client提供了透明代理。 
+这次service 的selector是name=redis-slave，我们可以方便的使用kubectl get services -l “label=value”命令来定位这些服务
+
+[root@master guestbook]# kubectl create -f redis-slave-service.yaml 
+service “redis-slave” created 
+[root@master guestbook]#
+
+[root@master guestbook]# kubectl get svc -o wide 
+NAME CLUSTER-IP EXTERNAL-IP PORT(S) AGE SELECTOR 
+kubernetes 10.254.0.1 443/TCP 44m 
+redis-master 10.254.203.144 6379/TCP 12m app=redis,role=master,tier=backend 
+redis-slave 10.254.0.214 6379/TCP 38s app=redis,role=slave,tier=backend 
+[root@master guestbook]# 
+5、创建frontend pod 
+这是一个简单的PHP 服务，用来和master service（写请求）或slave service（读请求）交互
+
+[root@master guestbook]# kubectl create -f frontend-deployment.yaml 
+deployment "frontend" created
+[root@master guestbook]# 
+
+[root@master guestbook]# kubectl get deploy
+NAME           DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+frontend       3         3         3            2           13s
+redis-master   1         1         1            1           22m
+redis-slave    2         2         2            2           5m
+[root@master guestbook]# 
+
+[root@master guestbook]# kubectl get pods -o wide
+NAME                           READY     STATUS    RESTARTS   AGE       IP            NODE
+frontend-941252965-8rvrb       1/1       Running   0          1m        10.255.73.4   node2
+frontend-941252965-ka3vd       1/1       Running   0          1m        10.255.70.3   node1
+frontend-941252965-qqamp       1/1       Running   0          1m        10.255.70.4   node1
+redis-master-517881005-c3qek   1/1       Running   0          24m       10.255.73.2   node2
+redis-slave-1885102530-brg9b   1/1       Running   0          7m        10.255.73.3   node2
+redis-slave-1885102530-o8y5p   1/1       Running   0          7m        10.255.70.2   node1
+[root@master guestbook]# 
+可以看到一个redis master，两个redis slave和三个frontend pods
+6、创建guestbook service 
+和其他service一样，你可以创建一个service管理frontend pods
+
+[root@master guestbook]# kubectl create -f frontend-service.yaml 
+service "frontend" created
+[root@master guestbook]# 
+
+[root@master guestbook]# kubectl get svc -o wide
+NAME           CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE       SELECTOR
+frontend       10.254.18.215            80/TCP     44s       app=guestbook,tier=frontend
+kubernetes     10.254.0.1               443/TCP    50m       
+redis-master   10.254.203.144           6379/TCP   18m       app=redis,role=master,tier=backend
+redis-slave    10.254.0.214             6379/TCP   6m        app=redis,role=slave,tier=backend
+[root@master guestbook]# 
+我们可以通过frontend service（10.254.18.215）访问pods
+
+7、外部网络访问guestbook 
+http://192.168.3.54:30001 可以直接访问了 
+[root@node2 ~]# curl http://192.168.3.54:30001
+
+
+
+  
+    Guestbook
+    
+    
+    
+    
+  
+  
+    
+
+      
+Guestbook
+
+
+    
+    
+    
+
+    Submit
+    
+    
+    
+
+      
+
+        {{msg}}
+      
+
+    
+
+    
+
+  
+
+[root@node2 ~]#
+附: 本案例用到的6个.yaml文件
+
+1、redis-master-deployment.yaml
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-master
+  # these labels can be applied automatically 
+  # from the labels in the pod template if not set
+  # labels:
+  #   app: redis
+  #   role: master
+  #   tier: backend
+spec:
+  # this replicas value is default
+  # modify it according to your case
+  replicas: 1
+  # selector can be applied automatically 
+  # from the labels in the pod template if not set
+  # selector:
+  #   matchLabels:
+  #     app: guestbook
+  #     role: master
+  #     tier: backend
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+        tier: backend
+    spec:
+      containers:
+      - name: master
+        image: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+2、redis-master-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  labels:
+    app: redis
+    role: master
+    tier: backend
+spec:
+  ports:
+    # the port that this service should serve on
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
+    role: master
+    tier: backend
+3、redis-slave-deployment.yaml
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-slave
+  # these labels can be applied automatically
+  # from the labels in the pod template if not set
+  # labels:
+  #   app: redis
+  #   role: slave
+  #   tier: backend
+spec:
+  # this replicas value is default
+  # modify it according to your case
+  replicas: 2
+  # selector can be applied automatically
+  # from the labels in the pod template if not set
+  # selector:
+  #   matchLabels:
+  #     app: guestbook
+  #     role: slave
+  #     tier: backend
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: slave
+        tier: backend
+    spec:
+      containers:
+      - name: slave
+        image: kubeguide/guestbook-redis-slave
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        env:
+        - name: GET_HOSTS_FROM
+          value: env
+          # If your cluster config does not include a dns service, then to
+          # instead access an environment variable to find the master
+          # service's host, comment out the 'value: dns' line above, and
+          # uncomment the line below.
+          # value: env
+        ports:
+        - containerPort: 6379
+4、redis-slave-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-slave
+  labels:
+    app: redis
+    role: slave
+    tier: backend
+spec:
+  ports:
+    # the port that this service should serve on
+  - port: 6379
+  selector:
+    app: redis
+    role: slave
+    tier: backend
+5、frontend-deployment.yaml
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: frontend
+  # these labels can be applied automatically
+  # from the labels in the pod template if not set
+  # labels:
+  #   app: guestbook
+  #   tier: frontend
+spec:
+  # this replicas value is default
+  # modify it according to your case
+  replicas: 3
+  # selector can be applied automatically
+  # from the labels in the pod template if not set
+  # selector:
+  #   matchLabels:
+  #     app: guestbook
+  #     tier: frontend
+  template:
+    metadata:
+      labels:
+        app: guestbook
+        tier: frontend
+    spec:
+      containers:
+      - name: php-redis
+        image: kubeguide/guestbook-php-frontend
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        env:
+        - name: GET_HOSTS_FROM
+          value: env
+          # If your cluster config does not include a dns service, then to
+          # instead access environment variables to find service host
+          # info, comment out the 'value: dns' line above, and uncomment the
+          # line below.
+          # value: env
+        ports:
+        - containerPort: 80
+6、frontend-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: guestbook
+    tier: frontend
+spec:
+  # if your cluster supports it, uncomment the following to automatically create
+  # an external load-balanced IP for the frontend service.
+  # type: LoadBalancer
+  type: NodePort
+  ports:
+    # the port that this service should serve on
+  - port: 80
+    nodePort: 30001
+  selector:
+    app: guestbook
+    tier: frontend
