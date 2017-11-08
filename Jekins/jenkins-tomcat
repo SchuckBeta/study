@@ -1,0 +1,6 @@
+scp target/ROOT.war  root@192.168.0.117:/opt/download/jenkins/
+sleep 2
+
+ssh root@192.168.0.117 '/opt/download/jenkins/bin/config.sh'
+sleep 2
+ssh root@192.168.0.117 '/opt/download/jenkins/bin/start.sh'
