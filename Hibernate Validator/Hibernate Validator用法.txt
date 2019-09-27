@@ -1,0 +1,168 @@
+
+    
+####简要描述：
+
+- Hibernate Validator用法
+
+####使用方式：
+- `1、BeanValidators.valid(validator, vo, HivGb.class)`
+- `2、注解：@Valid `
+- `3、注解：@Validated({HivGa.class, HivGb.class})  `
+- `-->@Validation对@Valid进行了二次封装`
+  
+####基本代码：
+```java
+ try{
+ 	BeanValidators.valid(validator, vo, HivGb.class);
+	return ApiResult.success(vo);
+ }catch (ConstraintViolationException e){
+ 	return BeanValidators.failedMap(e);
+ }catch (Exception e){
+ 	logger.error(e.getMessage());
+ 	return ApiResult.failed(ApiConst.STATUS_FAIL, e.getMessage());
+ }
+``` 
+
+####测试实体Bean
+```java
+public class Hivo implements Serializable{
+    @NotNull(message = "ID不能为空", groups = {HivGa.class})
+    @Length(min = 3, max = 100, message = "ID长度为3~100", groups = {HivGa.class, HivGb.class})
+    private String id;
+
+
+    @Emu(clazz = Esex.class, method = "valid", groups = {HivGa.class})
+    @Sex(message = "性别不合法", groups = {HivGa.class})
+    private String sex;
+
+
+    @NotNull(message = "{test.hivo.nameNotNull}", groups = {HivGb.class})
+    private String name;
+
+
+    @Email(message = "邮箱不合法", groups = {HivGb.class})
+    private String email;
+
+
+    @NotNull(message = "年龄不能为空", groups = {HivGa.class})
+    @Max(value = 90, message = "年龄不能大余90", groups = {HivGa.class})
+    @Min(value = 10, message = "年龄不能小于10", groups = {HivGb.class})
+    private Integer age;
+
+
+    @NotNull(message = "价格不能为空", groups = {HivGa.class})
+    @DecimalMax(value = "10", message = "价格不能大余10", groups = {HivGa.class, HivGb.class})
+    @DecimalMin(value = "3", message = "价格不能小于3", groups = {HivGb.class})
+    private Double price;
+}
+```
+
+####测试示例
+
+** 例子1: http://localhost:8493/a/api/vopostJson?id=11
+```java
+	//校验规则 HivGa.class
+	try{
+		BeanValidators.valid(validator, vo, HivGa.class);
+		return ApiResult.success(vo);
+	}catch (ConstraintViolationException e){
+		return BeanValidators.failedMap(e);
+	}
+	
+``` 
+``` 
+{
+  "status": 1,
+  "code": 1000,
+  "msg": "",
+  "data": "[{\"key\":\"0\",\"name\":\"未发布\"}, {\"key\":\"10\",\"name\":\"已发布\"}]"
+}
+```
+
+** 例子2: http://localhost:8493/a/api/vutil?id=11
+```java
+	//校验规则 HivGb.class
+    try{
+		BeanValidators.valid(validator, vo, HivGb.class);
+		return ApiResult.success(vo);
+	}catch (ConstraintViolationException e){
+		return BeanValidators.failedMap(e);
+	}catch (Exception e){
+		logger.error(e.getMessage());
+		return ApiResult.failed(ApiConst.STATUS_FAIL, e.getMessage());
+	}
+``` 
+``` 
+{
+  "status": 1,
+  "code": 1000,
+  "msg": "",
+  "data": "[{\"key\":\"0\",\"name\":\"未发布\"}, {\"key\":\"10\",\"name\":\"已发布\"}]"
+}
+```
+
+** 例子2: http://localhost:8493/a/api/params?id=11&name=11&price=100
+```java
+	//校验规则 HivGb.class
+    try{
+		Hivo vo = new Hivo();
+		vo.setName(name);
+		vo.setEmail(email);
+		vo.setPrice(price);
+		BeanValidators.valid(validator, vo, HivGa.class);
+		return ApiResult.success(vo);
+	}catch (ConstraintViolationException e){
+		return BeanValidators.failedMap(e);
+	}
+``` 
+``` 
+{
+  "status": 1,
+  "code": 1000,
+  "msg": "",
+  "data": "[{\"key\":\"0\",\"name\":\"未发布\"}, {\"key\":\"10\",\"name\":\"已发布\"}]"
+}
+```
+
+####工具方法
+######类：com.oseasy.pcore.common.beanvalidator.BeanValidators
+```java
+	
+	
+	/**
+	 * 显示异常信息（异常信息转换为Map）.
+	 * @param e
+	 * @return ApiResult
+	 */
+	public static ApiResult failedMap(ConstraintViolationException e) {
+		logger.error(e.getMessage());
+		return ApiResult.failed(ApiConst.PARAM_ERROR.getCode(), 			JsonMapper.toJsonString(BeanValidators.extractMapMessage(e)));
+	}
+
+	/**
+	 * 显示异常信息（异常信息转换为List）.
+	 * @param e
+	 * @return ApiResult
+	 */
+	public static ApiResult failedList(ConstraintViolationException e) {
+		logger.error(e.getMessage());
+		return ApiResult.failed(ApiConst.PARAM_ERROR.getCode(), JsonMapper.toJsonString(BeanValidators.extractListMessage(e)));
+	}
+```
+
+####待完善功能
+```
+支持ConstraintViolationException 异常全局捕获，统一处理 Hibernate Validator 产生的异常，以便于简化代码，使用 @Validated({HivGa.class, HivGb.class}) 注解实现校验。
+```
+
+####相关知识拓展
+- `1、自定义注解`
+- `2、自定义 Hibernate Validator 校验注解`
+- `3、统一异常处理 `
+
+
+
+- 更多返回错误代码请看首页的错误代码描述
+
+
+欢迎使用ShowDoc！
