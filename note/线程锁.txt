@@ -1,0 +1,87 @@
+1、锁的种类.
+    乐观锁/悲观锁
+    独享锁/共享锁
+    互斥锁/读写锁
+    可重入锁/不可重入锁
+    公平锁/非公平锁
+    分段锁
+    偏向锁/轻量级锁/重量级锁
+    自旋锁
+	https://www.cnblogs.com/hustzzl/p/9343797.html
+
+————————————————
+
+
+2、可重入锁与不可重入锁.
+	不可重入锁需要锁标记，等待条件（锁标记）
+	可重入锁需要锁标记和当前线程标记，等待条件（锁标记+非当前线程）	
+
+public class Lock{
+    private boolean isLocked = false;
+    public synchronized void lock() throws InterruptedException{
+        while(isLocked){    
+            wait();
+        }
+        isLocked = true;
+    }
+    public synchronized void unlock(){
+        isLocked = false;
+        notify();
+    }
+}
+//使用
+class Count{
+    Lock lock = new Lock();
+    public void print(){
+        lock.lock();
+        doAdd();
+        lock.unlock();
+    }
+    public void doAdd(){
+        lock.lock();
+        //do something
+        lock.unlock();
+    }
+}
+————————————————
+public class Lock{
+    boolean isLocked = false;
+    Thread  lockedBy = null;
+    int lockedCount = 0;
+    public synchronized void lock()
+            throws InterruptedException{
+        Thread thread = Thread.currentThread();
+        while(isLocked && lockedBy != thread){
+            wait();
+        }
+        isLocked = true;
+        lockedCount++;
+        lockedBy = thread;
+    }
+    public synchronized void unlock(){
+        if(Thread.currentThread() == this.lockedBy){
+            lockedCount--;
+            if(lockedCount == 0){
+                isLocked = false;
+                notify();
+            }
+        }
+    }
+}
+//使用
+class Count{
+    Lock lock = new Lock();
+    public void print(){
+        lock.lock();
+        doAdd();
+        lock.unlock();
+    }
+    public void doAdd(){
+        lock.lock();
+        //do something
+        lock.unlock();
+    }
+}
+
+
+————————————————
