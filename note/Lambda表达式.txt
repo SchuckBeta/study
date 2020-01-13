@@ -1,0 +1,128 @@
+1、Lambda 核心原理.
+	Java8开始，支持方法引用
+————————————————
+
+
+2、Lambda:函数式接口 Predicate
+	
+public static void main(args[]){
+    List languages = Arrays.asList("Java", "Scala", "C++", "Haskell", "Lisp");
+ 
+    System.out.println("Languages which starts with J :");
+    filter(languages, (str)->str.startsWith("J"));
+ 
+    System.out.println("Languages which ends with a ");
+    filter(languages, (str)->str.endsWith("a"));
+ 
+    System.out.println("Print no language : ");
+    filter(languages, (str)->false);
+ 
+    System.out.println("Print language whose length greater than 4:");
+    filter(languages, (str)->str.length() > 4);
+}
+ 
+public static void filter(List names, Predicate condition) {
+    for(String name: names)  {
+        if(condition.test(name)) {
+            System.out.println(name + " ");
+        }
+    }
+}
+
+
+// 甚至可以用and()、or()和xor()逻辑函数来合并Predicate，
+// 例如要找到所有以J开始，长度为四个字母的名字，你可以合并两个Predicate并传入
+Predicate<String> startsWithJ = (n) -> n.startsWith("J");
+Predicate<String> fourLetterLong = (n) -> n.length() == 4;
+names.stream()
+    .filter(startsWithJ.and(fourLetterLong))
+    .forEach((n) -> System.out.print("nName, which starts with 'J' and four letter long is : " + n));
+————————————————
+
+
+3、Lambda:map()  (流API的收集器类)
+
+// 不使用lambda表达式为每个订单加上12%的税
+List costBeforeTax = Arrays.asList(100, 200, 300, 400, 500);
+for (Integer cost : costBeforeTax) {
+    double price = cost + .12*cost;
+    System.out.println(price);
+}
+ 
+// 使用lambda表达式
+List costBeforeTax = Arrays.asList(100, 200, 300, 400, 500);
+costBeforeTax.stream().map((cost) -> cost + .12*cost).forEach(System.out::println);
+————————————————
+
+
+4、Lambda:Reduce()  (所有值进行合并)
+
+// 为每个订单加上12%的税
+// 老方法：
+List costBeforeTax = Arrays.asList(100, 200, 300, 400, 500);
+double total = 0;
+for (Integer cost : costBeforeTax) {
+    double price = cost + .12*cost;
+    total = total + price;
+}
+System.out.println("Total : " + total);
+ 
+// 新方法：
+List costBeforeTax = Arrays.asList(100, 200, 300, 400, 500);
+double bill = costBeforeTax.stream().map((cost) -> cost + .12*cost).reduce((sum, cost) -> sum + cost).get();
+System.out.println("Total : " + bill);
+————————————————
+
+
+5、Lambda:filter()  (过滤创建一个String列表)
+
+// 创建一个字符串列表，每个字符串长度大于2
+List<String> filtered = strList.stream().filter(x -> x.length()> 2).collect(Collectors.toList());
+System.out.printf("Original List : %s, filtered list : %s %n", strList, filtered);
+————————————————
+
+
+6、Lambda:Collectors  (收集应用容器内容)
+
+// 创建一个字符串列表，每个字符串长度大于2
+List<String> filtered = strList.stream().filter(x -> x.length()> 2).collect(Collectors.toList());
+System.out.printf("Original List : %s, filtered list : %s %n", strList, filtered);
+
+String G7Countries = G7.stream().map(x -> x.toUpperCase()).collect(Collectors.joining(", "));
+————————————————
+
+
+7、Lambda:distinct()  (去重)
+// 用所有不同的数字创建一个正方形列表
+List<Integer> numbers = Arrays.asList(9, 10, 3, 4, 7, 3, 4);
+List<Integer> distinct = numbers.stream().map( i -> i*i).distinct().collect(Collectors.toList());
+System.out.printf("Original List : %s,  Square Without duplicates : %s %n", numbers, distinct);
+————————————————
+
+
+8、计算集合元素的最大值、最小值、总和以及平均值
+
+//获取数字的个数、最小值、最大值、总和以及平均值
+List<Integer> primes = Arrays.asList(2, 3, 5, 7, 11, 13, 17, 19, 23, 29);
+IntSummaryStatistics stats = primes.stream().mapToInt((x) -> x).summaryStatistics();
+System.out.println("Highest prime number in List : " + stats.getMax());
+System.out.println("Lowest prime number in List : " + stats.getMin());
+System.out.println("Sum of all prime numbers : " + stats.getSum());
+System.out.println("Average of all prime numbers : " + stats.getAverage());
+————————————————
+
+
+9、Lambda表达式 vs 匿名类
+
+既然lambda表达式即将正式取代Java代码中的匿名内部类，那么有必要对二者做一个比较分析。一个关键的不同点就是关键字 this。匿名类的 this 关键字指向匿名类，
+而lambda表达式的 this 关键字指向包围lambda表达式的类。另一个不同点是二者的编译方式。Java编译器将lambda表达式编译成类的私有方法。使用了Java 7的 invokedynamic 字节码指令来动态绑定这个方法。
+————————————————
+
+
+10、
+————————————————
+
+
+11、
+————————————————
+

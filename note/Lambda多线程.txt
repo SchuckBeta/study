@@ -1,9 +1,271 @@
-1、多线程.
+1、Lambda:Runnable
+
+public static void main(String[] args)
+{
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    executorService.submit(() ->
+    {
+        Thread.currentThread().setName("I am child thread");
+        try
+        {
+            Thread.sleep(2);
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        System.out.println(Thread.currentThread().getName() + ", id: " + Thread.currentThread().getId());
+    });
+}
+————————————————
+
+
+2、Lambda:Callable
+
+public static void main(String[] args)
+{
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    Future<Double> future = executorService.submit(() ->
+    {
+        Thread.currentThread().setName("I am child thread.");
+        System.out.println(Thread.currentThread().getName() + ", id: " + Thread.currentThread().getId());
+        Random random = new Random();
+        Double weight = random.nextDouble();
+        System.out.println("weight: " + weight);
+        return weight;
+    });
+    executorService.shutdown();
+
+    try
+    {
+        Double result = future.get(1, TimeUnit.SECONDS);
+        System.out.println("Result: " + result);
+    }
+    catch (InterruptedException e)
+    {
+        e.printStackTrace();
+    }
+    catch (ExecutionException e)
+    {
+        e.printStackTrace();
+    }
+    catch (TimeoutException e)
+    {
+        e.printStackTrace();
+    }
+}
+————————————————
+
+
+3、Lambda:FutureTask
+
+public static void main(String[] args)
+{
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    FutureTask<Double> futureTask = new FutureTask<Double>(() ->
+    {
+        Thread.currentThread().setName("I am child thread.");
+        System.out.println(Thread.currentThread().getName() + ", id: " + Thread.currentThread().getId());
+        Random random = new Random();
+        Double weight = random.nextDouble();
+        System.out.println("weight: " + weight);
+        return weight;
+    });
+
+    executorService.submit(futureTask);
+    executorService.shutdown();
+
+    try
+    {
+        Double result = futureTask.get(2, TimeUnit.SECONDS);
+        System.out.println("Result: " + result);
+    }
+    catch (InterruptedException e)
+    {
+        e.printStackTrace();
+    }
+    catch (ExecutionException e)
+    {
+        e.printStackTrace();
+    }
+    catch (TimeoutException e)
+    {
+        e.printStackTrace();
+    }
+}
+————————————————
+
+
+4、Lambda:CompletableFuture
+public class CompletableFutrueTest
+{
+    public static void main(String[] args)
+    {
+        try
+        {
+//			CompletableFutrueTest.runAync();
+//			CompletableFutrueTest.supplyAsync();
+//          CompletableFutrueTest.whenComplete();
+//            CompletableFutrueTest.thenApply();
+//            CompletableFutrueTest.handle();
+            CompletableFutrueTest.thenAccept();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    //无返回值
+    private static void runAync() throws Exception
+    {
+        CompletableFuture future = CompletableFuture.runAsync(() ->
+        {
+            try
+            {
+                TimeUnit.SECONDS.sleep(1);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+            System.out.println("run end...");
+        });
+        future.get();
+    }
+
+    //有返回值
+    private static void supplyAsync() throws Exception
+    {
+        CompletableFuture<Long> future = CompletableFuture.supplyAsync(() ->
+        {
+            try
+            {
+                TimeUnit.SECONDS.sleep(1);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+            System.out.println("run end ...");
+            return System.currentTimeMillis();
+        });
+
+        long time = future.get();
+        System.out.println("time: " + time);
+    }
+
+    //计算结果完成时的回调方法
+    private static void whenComplete() throws Exception
+    {
+        //链式编程简洁
+        //创建一个异步操作
+        CompletableFuture.runAsync(() ->
+        {
+            try
+            {
+                TimeUnit.SECONDS.sleep(1);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+            if (new Random().nextInt(10) % 2 == 0)
+            {
+                int i = 12 / 0;
+            }
+            System.out.println("run end ...");
+
+        }).exceptionally((throwable) ->
+        {
+            System.out.println("执行失败! " + throwable.getMessage());
+            return null;
+        }).whenComplete((aVoid, throwable) ->
+        {
+            System.out.println("执行完毕");
+        });
+
+        TimeUnit.SECONDS.sleep(2);
+    }
+
+    //当一个线程依赖另一个线程
+    private static void thenApply() throws Exception
+    {
+        CompletableFuture future = CompletableFuture.supplyAsync(() ->
+        {
+            long result = new Random().nextInt(100);
+            System.out.println("result1=" + result);
+            return result;
+        }).thenApply(t ->
+        {
+            long result = t * 5;
+            System.out.println("result2=" + result);
+            return result;
+        });
+
+        long result = (long) future.get();
+        System.out.println(result);
+    }
+
+    //执行任务完成时对结果的处理
+    //handle 方法和 thenApply 方法处理方式基本一样。
+    //不同的是 handle 是在任务完成后再执行，还可以处理异常的任务。
+    //thenApply 只可以执行正常的任务，任务出现异常则不执行 thenApply 方法。
+    private static void handle() throws Exception
+    {
+        CompletableFuture future = CompletableFuture.supplyAsync(() ->
+        {
+            int i = 10 / 0;
+            return new Random().nextInt(100);
+        }).handle((param, throwable) ->
+        {
+            int result = -1;
+            if (null == throwable)
+            {
+                result = param * 5;
+            }
+            else
+            {
+                System.out.println("error: " + throwable.getMessage());
+            }
+            return result;
+        });
+        System.out.println(future.get());
+    }
+
+    //接收任务的处理结果，并消费处理，无返回结果。
+    private static void thenAccept() throws Exception
+    {
+        CompletableFuture future = CompletableFuture.supplyAsync(() ->
+        {
+            return new Random().nextInt(100);
+        }).thenAccept((param ->
+        {
+            System.out.println("result: " + param);
+        }));
+
+        future.get();
+    }
+}
+————————————————
+
+
+5、Lambda:FutureTask
 
 ————————————————
 
 
-2、
+6、Lambda:FutureTask
 
+————————————————
+
+
+7、Lambda:FutureTask
+
+————————————————
+
+
+8、Lambda:FutureTask
 
 ————————————————
