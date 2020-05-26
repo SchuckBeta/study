@@ -1,0 +1,10 @@
+查询 error 2020-05-26 出现的次数
+grep  'error' /usr/local/apache-tomcat-front/logs/catalina.out |grep '2020-05-26' | wc -l
+
+ 
+查看 catalina.out 出现的地方上下5行 
+grep   -C  5 '2020-02-19' catalina.out |grep 'error' 
+
+grep -E "pattern1|pattern2"  files  或者关系
+
+grep -C number pattern files ：匹配的上下文分别显示[number]行
