@@ -1,0 +1,28 @@
+﻿more /etc/rc.d/rc.local 
+more /etc/rc.d/rc.local
+chmod +x /etc/rc.d/rc.local
+
+more /opt/creative/bin/autostart-service.sh
+more /opt/creative/bin/autostart-tomcat.sh  
+
+
+
+
+sh /usr/local/apache-tomcat-front/bin/startup.sh
+ 
+ 
+sleep 3
+echo [启动tomcat服务]`date "+%Y-%m-%d %H:%M:%S" ` >> /opt/start.log
+sh /usr/local/apache-tomcat-front/bin/startup.sh
+
+source /etc/profile
+
+
+vim   /etc/rc.d/rc.local
+source /etc/profile
+sleep 15
+### /opt/creative/bin/autostart-service.sh &
+##/opt/creative/bin/autostart-tomcat.sh &
+echo [启动tomcat服务]`date "+%Y-%m-%d %H:%M:%S" ` >> /opt/start.log
+nohup /usr/local/apache-tomcat-front/bin/startup.sh &
+
