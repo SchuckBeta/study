@@ -3,3 +3,9 @@ tar  -czvf  sysconfig.tar.gz /etc/sysconfig/
 
 
 tar  -xzvf  sysconfig.tar.gz 
+
+
+zip -r xx.zip /xx
+
+
+unzip -d /xxs  xxs.zip
